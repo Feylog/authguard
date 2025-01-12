@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: authguard
+  namespace: authguard
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: authguard
+  template:
+    metadata:
+      labels:
+        app: authguard
+    spec:
+      containers:
+        - name: authguard
+          image: feylog/authguard:latest
+          ports:
+            - containerPort: 8000
+          envFrom:
+            - configMapRef:
+                name: authguard-config
+            - secretRef:
+                name: authguard-secret

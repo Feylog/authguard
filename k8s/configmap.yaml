@@ -4,5 +4,6 @@ metadata:
   name: authguard-config
   namespace: authguard
 data:
-  SECRET_KEY: "your_secret_key"
   ACCESS_TOKEN_EXPIRE_MINUTES: "60"
+  ALGORITHM: "HS256"
+  # Можете добавлять любые не-секретные переменные

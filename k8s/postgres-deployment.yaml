@@ -22,13 +22,16 @@ spec:
             - name: POSTGRES_USER
               value: postgres
             - name: POSTGRES_PASSWORD
-              value: password
+              valueFrom:
+                secretKeyRef:
+                  name: authguard-secret
+                  key: POSTGRES_PASSWORD
             - name: POSTGRES_DB
               value: authguard
+          volumes:
+            - name: postgres-data
+              persistentVolumeClaim:
+                claimName: postgres-pvc
           volumeMounts:
-            - mountPath: /var/lib/postgresql/data
-              name: postgres-data
-      volumes:
-        - name: postgres-data
-          persistentVolumeClaim:
-            claimName: postgres-pvc
+            - name: postgres-data
+              mountPath: /var/lib/postgresql/data

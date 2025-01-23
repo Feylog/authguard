@@ -4,7 +4,7 @@ metadata:
   name: authguard
   namespace: authguard
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: authguard
@@ -23,3 +23,7 @@ spec:
                 name: authguard-config
             - secretRef:
                 name: authguard-secret
+          env:
+            # DATABASE_URL со ссылкой на сервис postgres-svc
+            - name: DATABASE_URL
+              value: "postgresql://postgres:password@postgres-svc:5432/authguard"

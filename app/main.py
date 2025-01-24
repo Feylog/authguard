@@ -5,25 +5,35 @@ from app.database import Base, engine, init_db
 from app.routes import auth, protected
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from prometheus_fastapi_instrumentator import Instrumentator
 
 app = FastAPI()
 
 # Настройка CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Для боевого окружения укажите конкретные домены
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Сначала регистрируем маршруты, чтобы они не были затенены монтированием
+# Регистрируем маршруты
 app.include_router(auth.router, prefix="/auth", tags=["Authentication"])
 app.include_router(protected.router, prefix="/protected", tags=["Protected"])
 
-# Создание таблиц базы данных и добавление синтетических данных
+# 1. Создаём объект Instrumentator
+instrumentator = Instrumentator()
+
+# 2. "Прикрепляем" middleware к приложению (DO NOT do it in startup)
+#    Это добавляет middleware метрик (чтобы собирать данные).
+instrumentator.instrument(app)
+
 @app.on_event("startup")
-def on_startup():
+async def startup_event():
+    """
+    Событие при старте приложения.
+    """
     try:
         Base.metadata.create_all(bind=engine)
         print("Таблицы успешно созданы!")
@@ -32,8 +42,10 @@ def on_startup():
     except Exception as e:
         print(f"Ошибка при инициализации базы данных: {e}")
 
-@app.on_event("startup")
-def log_routes():
+    # 3. Только теперь "включаем" эндпоинт /metrics
+    #    include_in_schema=True если хотим, чтобы он отображался в /docs
+    instrumentator.expose(app, endpoint="/metrics", include_in_schema=True)
+
     print("Список маршрутов:")
     for route in app.router.routes:
         if isinstance(route, fastapi.routing.APIRoute):
@@ -43,10 +55,9 @@ def log_routes():
         else:
             print(f"{route.path} -> {route.name} -> (Unknown Route Type)")
 
-# Проверка здоровья приложения
 @app.get("/")
 def read_root():
     return {"message": "AuthGuard is running!"}
 
-# Монтируем статику после того, как зарегистрированы все другие маршруты
+# Подключаем статику
 app.mount("/frontend", StaticFiles(directory="frontend", html=True), name="frontend")

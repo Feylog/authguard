@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: authguard
-          image: feylog/authguard:latest
+          image: feylog/authguard:v3
           ports:
             - containerPort: 8000
           envFrom:

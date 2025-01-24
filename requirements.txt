@@ -6,3 +6,4 @@ python-dotenv
 passlib[bcrypt]
 pyjwt
 bcrypt
+prometheus-fastapi-instrumentator
